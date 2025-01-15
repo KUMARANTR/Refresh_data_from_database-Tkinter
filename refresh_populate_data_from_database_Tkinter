@@ -1,0 +1,154 @@
+I have a function called add dynamic column  listed above and i have added print statements into it and all the values are correct. 
+however when i call the function in the loading process of my gui my entry boxes are repeating for one set of values.
+If i click  a button in the Gui that reference the very same function afterwards 
+then it will show the correct values how can I get the correct values to show on the initial load process 
+
+
+############################################################### Refresh  from a database in Tkinter python
+The issue you're describing—where the GUI shows duplicate entry boxes during the initial load but displays correctly after a button press—is likely due to the order in which the function add_dynamic_column_repeated is called during the GUI's initialization. This is often a result of the GUI elements or data not being fully initialized when the function is executed on the first run.
+
+Steps to Fix the Issue
+Ensure Proper Data Initialization
+Ensure that all the required data (like Shared.storage_df, entries, and existing_columns) is fully populated before add_dynamic_column_repeated is called during the initial load process. If the data isn't ready, it might cause duplicate or unexpected behavior.
+
+Debug with Delayed Execution
+Use after() to delay the execution of add_dynamic_column_repeated during the initial load. This allows the GUI to complete its rendering and ensures that the data and elements are ready before the function executes. Example:
+
+python
+Copy code
+root.after(100, add_dynamic_column_repeated)  # Delay execution by 100 milliseconds
+Avoid Repeated Calls During Initialization
+Check that add_dynamic_column_repeated is not being inadvertently called multiple times during the initialization phase. For example, if the function is called directly and also via some event handler, it may result in duplicates.
+
+Clear Old Entries Before Adding New Ones
+If duplicates are caused by leftover widgets from previous runs, ensure to clear or reset the entries list and associated widgets before populating it again. Add this logic at the start of the function:
+
+python
+Copy code
+for entry_widget, _ in entries:
+    entry_widget.destroy()  # Remove the widget from the GUI
+entries.clear()  # Reset the entries list
+Call the Function on GUI Update
+Make sure the function is called after the GUI is fully rendered. You can use root.update_idletasks() to force the GUI to process pending events.
+
+Updated Example Integration
+Here’s how you can integrate these ideas into your code:
+
+python
+Copy code
+def add_dynamic_column_repeated():
+    # Ensure existing widgets are cleared
+    for entry_widget, _ in entries:
+        entry_widget.destroy()
+    entries.clear()
+    
+    # Fetch unique column names for the given DC_Name from the database
+    unique_columns = Shared.storage_df.loc[
+        (Shared.storage_df['DC_Name'] == dc_name) & (Shared.storage_df['Column_Name'] != ""),
+        'Column_Name'
+    ].unique()
+
+    # Track already displayed column names
+    existing_columns = {entry[0].get() for entry in entries}
+
+    # Iterate through unique column names and add only new ones
+    for column_name in unique_columns:
+        if column_name not in existing_columns:
+            # Same logic as before to add entries
+            column_index = len(entries) + 2
+            column_name_entry = tk.Entry(scrollable_frame, font=("Helvetica", 10), width=20,
+                                         highlightthickness=2, highlightbackground="black")
+            column_name_entry.grid(row=start_row + 1, column=column_index, padx=10, pady=5, sticky="w")
+            column_name_entry.insert(0, column_name)
+
+            column_entries = []
+            for i, metric in enumerate(metrics_fields):
+                # Create widgets for each metric
+                entry = tk.Entry(scrollable_frame, font=("Helvetica", 10), width=20, highlightthickness=2,
+                                 highlightbackground="black")
+                entry.grid(row=row_index + i, column=column_index, padx=10, pady=5, sticky="w")
+                entry.insert(0, "Value")  # Replace "Value" with actual logic
+                column_entries.append((metric, entry))
+            
+            entries.append((column_name_entry, column_entries))
+            existing_columns.add(column_name)
+
+# On initialization, schedule the function with a slight delay
+root.after(100, add_dynamic_column_repeated)
+Why This Works
+Delayed Execution: The after() ensures the GUI and data are fully initialized.
+Reset Entries: Clearing old widgets prevents duplicates.
+Avoid Redundant Calls: The function executes only once during initialization.
+This should resolve the issue of duplicate entry boxes on initial load.
+##############################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+This python  code alone works(# On initialization, schedule the function with a slight delay
+root.after(100, add_dynamic_column_repeated))
+######################python code######################
+def add_dynamic_column_repeated():
+    # Ensure existing widgets are cleared
+    for entry_widget, _ in entries:
+        entry_widget.destroy()
+    entries.clear()
+    
+    # Fetch unique column names for the given DC_Name from the database
+    unique_columns = Shared.storage_df.loc[
+        (Shared.storage_df['DC_Name'] == dc_name) & (Shared.storage_df['Column_Name'] != ""),
+        'Column_Name'
+    ].unique()
+
+    # Track already displayed column names
+    existing_columns = {entry[0].get() for entry in entries}
+
+    # Iterate through unique column names and add only new ones
+    for column_name in unique_columns:
+        if column_name not in existing_columns:
+            # Same logic as before to add entries
+            column_index = len(entries) + 2
+            column_name_entry = tk.Entry(scrollable_frame, font=("Helvetica", 10), width=20,
+                                         highlightthickness=2, highlightbackground="black")
+            column_name_entry.grid(row=start_row + 1, column=column_index, padx=10, pady=5, sticky="w")
+            column_name_entry.insert(0, column_name)
+
+            column_entries = []
+            for i, metric in enumerate(metrics_fields):
+                # Create widgets for each metric
+                entry = tk.Entry(scrollable_frame, font=("Helvetica", 10), width=20, highlightthickness=2,
+                                 highlightbackground="black")
+                entry.grid(row=row_index + i, column=column_index, padx=10, pady=5, sticky="w")
+                entry.insert(0, "Value")  # Replace "Value" with actual logic
+                column_entries.append((metric, entry))
+            
+            entries.append((column_name_entry, column_entries))
+            existing_columns.add(column_name)
+
+# On initialization, schedule the function with a slight delay
+root.after(100, add_dynamic_column_repeated)
+
+
+######################python code######################
